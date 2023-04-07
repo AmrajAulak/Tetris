@@ -6,7 +6,6 @@ pygame.init()
 
 import random
 
-#Consider the NumPy library
 
 width, height = 500, 600
 
@@ -119,7 +118,8 @@ o = (237, 144, 14)
 p = (152, 14, 237)
 
 shape_selection = ['O', 'T', 'S', 'Z', 'I', 'L1', 'L2']
-topLeft_init = [[5,0], [4,0], [4,0], [4,0], [5,0], [4,0], [4,0]]
+#topLeft_init = [[5,0], [4,0], [4,0], [4,0], [5,0], [4,0], [4,0]]
+topLeft_init = [5, 4, 4, 4, 5, 4, 4]
 colours = [y, p, g, r, lb, db, o]
 	
 landed = []
@@ -138,7 +138,7 @@ def draw_grid():
 def make_grid():
 	for i in range (rows):
 		landed.append([])
-		for j in range (columns):
+		for _ in range (columns):
 			landed[i].append(0)
 	
 
@@ -184,7 +184,8 @@ class Piece:
 
 	def spawn_piece(self):
 		
-		self.topLeft = [topLeft_init[shape_selection.index(self.shapePick)][0], 0]
+		#self.topLeft = [topLeft_init[shape_selection.index(self.shapePick)][0], 0]
+		self.topLeft = [topLeft_init[shape_selection.index(self.shapePick)], 0]
 		self.pot_topLeft = [self.topLeft[0], self.topLeft[1] + 1]
 		
 
@@ -214,7 +215,7 @@ class Piece:
 				else: 
 					self.pot_topLeft[0] += -1
 
-			if mv_type == 'down':
+			if mv_type == 'soft_drop':
 				
 				self.pot_topLeft[1] += 2
 				self.isMoveValid()
@@ -223,6 +224,16 @@ class Piece:
 				else: 
 					self.pot_topLeft[1] += -2
 				
+			if mv_type == 'hard_drop':
+				
+				while not self.isLanded:
+	
+					self.pot_topLeft[1] += 1
+					self.isMoveValid()
+			
+					self.topLeft[1] += 1	
+	
+
 			if mv_type == 'up':	
 
 				if self.shapePick != 'O':
@@ -462,7 +473,7 @@ class Game ():
 
 
 
-def update_position(tetromino,nxtp):
+def update_position(tetromino,next_piece):
 		
 	tetromino.isMoveValid()
 
@@ -479,35 +490,34 @@ def update_position(tetromino,nxtp):
 			g.check_rows()
 
 			tetromino.isLanded = False
-			tetromino.piecePos = nxtp.piecePos
-			tetromino.piece  = nxtp.piece
-			tetromino.shapePick = nxtp.shapePick
-			tetromino.colour = nxtp.colour
+			tetromino.piecePos = next_piece.piecePos
+			tetromino.piece  = next_piece.piece
+			tetromino.shapePick = next_piece.shapePick
+			tetromino.colour = next_piece.colour
 
 			tetromino.spawn_piece()
-			nxtp.get_shape()
-			nxtp.draw_shape()
+			next_piece.get_shape()
+			next_piece.draw_shape()
 
 
 
 def main():
 
-	time_elapsed = 0
 	dt_old = 0
+	#time_int = 500
+	time_int = 500
 
 	make_grid()
 
 	tetromino = Piece()
-	nxtp = Piece()
-	#g = Game()
+	next_piece = Piece()
+	
 	tetromino.get_shape()
 	tetromino.spawn_piece()
-	nxtp.get_shape()
+	next_piece.get_shape()
 
-	count = 0
 	running = True
-	mv = ''
-	time_int = 500
+	
 
 	while running:
 		
@@ -521,15 +531,20 @@ def main():
 					tetromino.move_piece('right')
 				elif event.key == pygame.K_UP:
 					tetromino.move_piece('up')
-				elif event.key == pygame.K_DOWN: 
-					tetromino.move_piece('down')
+				elif event.key == pygame.K_SPACE: 
+					tetromino.move_piece('hard_drop')
+
+		keys = pygame.key.get_pressed()
+		if keys[pygame.K_DOWN]:
+			tetromino.move_piece('soft_drop')
 
 
 		dt = pygame.time.get_ticks() 
 
-		time_int += -0.005
+		#time_int += -0.005
+		#print(time_int)
 		if (dt -dt_old) > time_int:
-			update_position(tetromino,nxtp)
+			update_position(tetromino,next_piece)
 			dt_old = dt
 		
 		
@@ -537,10 +552,11 @@ def main():
 		draw_grid()
 		tetromino.draw_piece()
 		tetromino.draw_landed()
-		nxtp.draw_shape()
+		next_piece.draw_shape()
 		Game.display_text()
 		pygame.display.flip()
-		clock.tick(60)
+		#clock.tick(60)
+		clock.tick(20)
 
 main()
 
