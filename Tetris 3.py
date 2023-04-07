@@ -119,7 +119,6 @@ p = (152, 14, 237)
 gray = (211,211,211)
 
 shape_selection = ['O', 'T', 'S', 'Z', 'I', 'L1', 'L2']
-#topLeft_init = [[5,0], [4,0], [4,0], [4,0], [5,0], [4,0], [4,0]]
 topLeft_init = [5, 4, 4, 4, 5, 4, 4]
 colours = [y, p, g, r, lb, db, o]
 	
@@ -315,14 +314,6 @@ class Piece:
 								sideB + (self.ghost_topLeft[0] + j)*blockSize + margin),(topB 
 								+ (self.ghost_topLeft[1] + i)*blockSize + margin), TblockSize, TblockSize))
 
-	# def draw_ghost(self):
-	# 		if self.piece != 0:
-	# 			for i in range(len(self.piece)):
-	# 				for j in range(len(self.piece[i])):
-	# 					if self.piece[i][j] != 0:
-	# 						pygame.draw.rect(window, gray, pygame.Rect((
-	# 							sideB + (self.ghost_topLeft[0] + j)*blockSize + margin),(topB 
-	# 							+ (self.ghost_topLeft[1] + i)*blockSize + margin), TblockSize, TblockSize))
 
 	def draw_landed(self):
 		for i in range(len(landed)):
@@ -508,7 +499,6 @@ class Game ():
 					landed[i + block.topLeft[1]][j + block.topLeft[0]] = block.piece[i][j]
 
 
-
 def update_position(tetromino,next_piece):
 		
 	tetromino.isMoveValid()
@@ -573,7 +563,6 @@ def main():
 				elif event.key == pygame.K_SPACE: 
 					tetromino.move_piece('hard_drop')
 
-				#tetromino.generate_ghost()
 
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_DOWN]:
@@ -582,7 +571,7 @@ def main():
 
 		dt = pygame.time.get_ticks() 
 
-		#time_int += -0.005
+		time_int += -0.01
 		#print(time_int)
 		if (dt -dt_old) > time_int:
 			update_position(tetromino,next_piece)
