@@ -116,6 +116,7 @@ db = (21, 0, 255)
 g = (14, 237, 59)
 o = (237, 144, 14)
 p = (152, 14, 237)
+gray = (211,211,211)
 
 shape_selection = ['O', 'T', 'S', 'Z', 'I', 'L1', 'L2']
 #topLeft_init = [[5,0], [4,0], [4,0], [4,0], [5,0], [4,0], [4,0]]
@@ -125,8 +126,6 @@ colours = [y, p, g, r, lb, db, o]
 landed = []
 
 clock = pygame.time.Clock()
-
-
 
 
 def draw_grid():
@@ -148,6 +147,7 @@ class Piece:
 		self.piece = 0
 		self.piecePos = 0
 		self.topLeft = 0
+		self.ghost_topLeft = [0, 0]
 		self.pot_topLeft = 0
 		self.rot_ind = 0
 		self.colour = 0
@@ -183,7 +183,6 @@ class Piece:
 
 
 	def spawn_piece(self):
-		
 		#self.topLeft = [topLeft_init[shape_selection.index(self.shapePick)][0], 0]
 		self.topLeft = [topLeft_init[shape_selection.index(self.shapePick)], 0]
 		self.pot_topLeft = [self.topLeft[0], self.topLeft[1] + 1]
@@ -200,6 +199,7 @@ class Piece:
 
 				if not self.isLanded:
 					self.topLeft[0] += -1
+					self.generate_ghost()
 				else: 
 					self.pot_topLeft[0] += 1
 
@@ -212,6 +212,7 @@ class Piece:
 
 				if not self.isLanded:
 					self.topLeft[0] += 1
+					self.generate_ghost()
 				else: 
 					self.pot_topLeft[0] += -1
 
@@ -251,14 +252,17 @@ class Piece:
 
 
 					self.isMoveValid()
+
 					if self.isLanded:
 						if self.rot_ind == 0:
 							self.rot_ind = len(self.piecePos) - 1
 						else:
 							self.rot_ind += -1
 
-						self.piece = self.piecePos[self.rot_ind]
+					self.piece = self.piecePos[self.rot_ind]
 					
+					self.generate_ghost()
+
 
 	def isMoveValid (self):
 		self.isLanded = False
@@ -271,7 +275,27 @@ class Piece:
 					if landed[i + self.pot_topLeft[1]][j + self.pot_topLeft[0]] != 0:
 						self.isLanded = True
 
+	def generate_ghost(self):
 
+		self.ghost_topLeft[0] = self.topLeft[0]
+		self.ghost_topLeft[1] = self.topLeft[1]
+
+		while not self.isLanded:
+			self.ghost_topLeft[1] += 1
+
+			if (self.ghost_topLeft[1] + len(self.piece)) > rows:
+				self.isLanded = True
+				self.ghost_topLeft[1] +=-1
+				break
+
+			for i in range(len(self.piece)):
+				for j in range(len(self.piece[i])):
+					if self.piece[i][j] != 0:
+						if landed[i + self.ghost_topLeft[1]][j + self.ghost_topLeft[0]] != 0:
+							self.isLanded = True
+							self.ghost_topLeft[1] +=-1
+
+		
 	def freeze_piece(self):
 		for i in range(len(self.piece)):
 			for j in range(len(self.piece[i])):
@@ -285,8 +309,20 @@ class Piece:
 				for j in range(len(self.piece[i])):
 					if self.piece[i][j] != 0:
 						pygame.draw.rect(window, self.colour, pygame.Rect((
-							sideB + (self.topLeft[0] + j)*blockSize + margin),(topB + (self.topLeft[1] + i)*blockSize + margin), TblockSize, TblockSize))
+							sideB + (self.topLeft[0] + j)*blockSize + margin),(topB + (self.topLeft[1]
+							 + i)*blockSize + margin), TblockSize, TblockSize))
+						pygame.draw.rect(window, gray, pygame.Rect((
+								sideB + (self.ghost_topLeft[0] + j)*blockSize + margin),(topB 
+								+ (self.ghost_topLeft[1] + i)*blockSize + margin), TblockSize, TblockSize))
 
+	# def draw_ghost(self):
+	# 		if self.piece != 0:
+	# 			for i in range(len(self.piece)):
+	# 				for j in range(len(self.piece[i])):
+	# 					if self.piece[i][j] != 0:
+	# 						pygame.draw.rect(window, gray, pygame.Rect((
+	# 							sideB + (self.ghost_topLeft[0] + j)*blockSize + margin),(topB 
+	# 							+ (self.ghost_topLeft[1] + i)*blockSize + margin), TblockSize, TblockSize))
 
 	def draw_landed(self):
 		for i in range(len(landed)):
@@ -297,7 +333,7 @@ class Piece:
 							topB + (i * blockSize) + margin), TblockSize, TblockSize))
 
 	
-	def draw_shape(self):
+	def draw_next_piece(self):
 		if self.piece != 0:
 			for i in range(len(self.piece)):
 				for j in range(len(self.piece[i])):
@@ -496,8 +532,9 @@ def update_position(tetromino,next_piece):
 			tetromino.colour = next_piece.colour
 
 			tetromino.spawn_piece()
+			tetromino.generate_ghost()
 			next_piece.get_shape()
-			next_piece.draw_shape()
+			next_piece.draw_next_piece()
 
 
 
@@ -514,6 +551,7 @@ def main():
 	
 	tetromino.get_shape()
 	tetromino.spawn_piece()
+	tetromino.generate_ghost()
 	next_piece.get_shape()
 
 	running = True
@@ -525,6 +563,7 @@ def main():
 			if event.type == pygame.QUIT:
 				running = False
 			elif event.type == pygame.KEYDOWN:
+				
 				if event.key == pygame.K_LEFT:
 					tetromino.move_piece('left')
 				elif event.key == pygame.K_RIGHT:
@@ -533,6 +572,8 @@ def main():
 					tetromino.move_piece('up')
 				elif event.key == pygame.K_SPACE: 
 					tetromino.move_piece('hard_drop')
+
+				#tetromino.generate_ghost()
 
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_DOWN]:
@@ -545,6 +586,7 @@ def main():
 		#print(time_int)
 		if (dt -dt_old) > time_int:
 			update_position(tetromino,next_piece)
+
 			dt_old = dt
 		
 		
@@ -552,11 +594,11 @@ def main():
 		draw_grid()
 		tetromino.draw_piece()
 		tetromino.draw_landed()
-		next_piece.draw_shape()
+		next_piece.draw_next_piece()
 		Game.display_text()
 		pygame.display.flip()
 		#clock.tick(60)
-		clock.tick(20)
+		clock.tick(100)
 
 main()
 
